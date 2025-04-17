@@ -58,17 +58,119 @@ git checkout tags/testcomp25 -b local-testcomp25
 cd ../..
 ```
 
-## 5. Executar o BenchExec
+## 5. Verificar dependências
 
-Com tudo configurado, execute um dos benchmarks para verificar o ambiente:
+Você precisa garantir que o sistema tenha os requisitos básicos para rodar BenchExec e os scripts auxiliares.
+
+### 📦 Requisitos do sistema
+
+- Python 3.8+
+- pip, virtualenv (opcional, mas recomendado)
+- pacotes do sistema: libxml2, libxslt, zlib, time, cgroups, etc.
+
+### **Setup no Ubuntu/Debian**
 
 ```bash
-benchexec tools/bench-defs/benchmark-defs/symbiotic.xml
+sudo apt update
+sudo apt install python3 python3-pip python3-venv \
+                 pkg-config libsystemd-dev \
+                 libxml2 libxml2-utils libxslt1-dev \
+                 zlib1g-dev cgroup-tools
 ```
 
-A saída estará em `results/`, com relatórios HTML e CSV.
+## 6. Instalar o BenchExec (modo dev)
 
----
+### 🛑 Atenção
 
-Agora você tem um ambiente idêntico ao usado na Test‑Comp 2025 para validar o funcionamento da sua ferramenta.
+Não crie o ambiente virtual dentro da pasta tools/ ou de qualquer submodule (como tools/benchexec). Isso pode sobrescrever os arquivos do submodule e causar perda de dados. Prefira criar o venv na raiz do projeto ou em um diretório separado.
 
+### Você pode usar um ambiente virtual
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+
+cd tools/benchexec
+pip install .
+```
+
+### Opcionalmente, você pode instalar dependências extras
+
+```bash
+pip install .[gui]
+```
+
+Isso instala o benchexec, o runexec e o compare na linha de comando.
+
+## 7. Validar o ambiente de execução
+
+Antes de tentar rodar qualquer benchmark, é bom testar se o BenchExec funciona corretamente:
+
+```bash
+which benchexec   # deve apontar para seu venv/bin/benchexec
+benchexec --help
+```
+
+Você também pode validar o sistema:
+
+```bash
+runexec --version
+runexec --no-container /bin/true
+```
+
+## #⚠️ Observação sobre Cgroups
+
+Se aparecerem avisos sobre cgroup subsystem ou erro relacionado a freezer, o BenchExec está sem permissão para controlar os recursos do processo. Você pode contornar isso usando o systemd-run:
+
+```bash
+systemd-run --user --scope --slice=benchexec -p Delegate=yes runexec --no-container /bin/true
+```
+
+Ou instalar a biblioteca pystemd:
+
+```bash
+pip install pystemd
+```
+
+## 8. Explorar os XMLs de benchmark disponíveis
+
+Dentro de tools/bench-defs/benchmark-defs/, você verá vários arquivos .xml. Cada um representa uma categoria de benchmarks com:
+
+- paths para os binários das ferramentas
+- paths para os arquivos de teste (input programs)
+- limites de tempo, memória, CPUs
+- paths para o tool-info (definições de como chamar sua ferramenta)
+
+### Por exemplo
+
+```bash
+ls tools/bench-defs/benchmark-defs/*.xml
+```
+
+## 9. Conectar sua ferramenta ao BenchExec
+
+Você precisará de:
+
+- Um arquivo .xml de benchmark específico para sua ferramenta (você pode começar copiando e editando um já existente, como symbiotic.xml)
+
+- Um tool-info module em Python, dentro de tools/benchexec/benchexec/tools/, que define como sua ferramenta será chamada.
+
+### ⚙️ Exemplo: Se sua ferramenta se chama minha-tool, você pode criar:
+
+- tools/bench-defs/benchmark-defs/minha-tool.xml
+- tools/benchexec/benchexec/tools/minhatool.py
+
+## 10. Rodar um benchmark de teste
+
+Depois de conectar tudo, execute:
+
+```bash
+benchexec tools/bench-defs/benchmark-defs/minha-tool.xml
+```
+
+E então verifique os resultados em:
+
+```bash
+ls results/
+edge results/benchmark-XYZ/index.html
+``` 
