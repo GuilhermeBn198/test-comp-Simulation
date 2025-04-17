@@ -1,0 +1,9 @@
+[submodule "tools/benchexec"]
+	path = tools/benchexec
+	url = https://gitlab.com/sosy-lab/software/benchexec.git
+[submodule "tools/fm-tools"]
+	path = tools/fm-tools
+	url = https://gitlab.com/sosy-lab/benchmarking/fm-tools.git
+[submodule "tools/bench-defs"]
+	path = tools/bench-defs
+	url = https://gitlab.com/sosy-lab/test-comp/bench-defs.git
